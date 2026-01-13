@@ -23,7 +23,10 @@ app.use(
 
 //import routes
 import healthCheckRouter from "./routes/healthcheck.route.js";
+import authRouter from "./routes/auth.route.js";
 
+//route middlewares
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/healthcheck", healthCheckRouter);
 
 export default app;
