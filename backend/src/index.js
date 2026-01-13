@@ -1,10 +1,13 @@
 import dotenv from "dotenv";
-import app from "./app.js";
-import connectDB from "./db/db.js";
 
 dotenv.config({
   path: "./.env",
 });
+console.log("ENV CHECK:", process.env.MAILTRAP_SMTP_HOST);
+
+import app from "./app.js";
+import connectDB from "./db/db.js";
+
 
 const port = process.env.PORT || 3000;
 
