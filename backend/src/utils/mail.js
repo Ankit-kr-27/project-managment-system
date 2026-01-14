@@ -14,9 +14,9 @@ const sendEmail = async (options) => {
 
   const emailHtml = mailGenerator.generate(options.mailgenContent);
 
-console.log("MAILTRAP_HOST:", process.env.MAILTRAP_SMTP_HOST);
-console.log("MAILTRAP_PORT:", process.env.MAILTRAP_SMTP_PORT);
-console.log("MAILTRAP_USER:", process.env.MAILTRAP_SMTP_USER);
+// console.log("MAILTRAP_HOST:", process.env.MAILTRAP_SMTP_HOST);
+// console.log("MAILTRAP_PORT:", process.env.MAILTRAP_SMTP_PORT);
+// console.log("MAILTRAP_USER:", process.env.MAILTRAP_SMTP_USER);
 
   const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_SMTP_HOST,

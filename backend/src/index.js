@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 dotenv.config({
   path: "./.env",
 });
-console.log("ENV CHECK:", process.env.MAILTRAP_SMTP_HOST);
 
 import app from "./app.js";
 import connectDB from "./db/db.js";
