@@ -1,28 +1,41 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { LogOut } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="fixed top-0 w-full z-50 backdrop-blur bg-black/30 border-b border-white/10"
-    >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-white text-xl font-semibold">ProjectFlow</h1>
+    <header className="relative h-16 px-8 flex items-center justify-between
+      bg-[#0b0f1a]/70 backdrop-blur-xl
+      border-b border-white/10">
 
-        <div className="flex items-center gap-6">
-          <Link to="/login" className="text-gray-300 hover:text-white">
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition"
-          >
-            Get Started
-          </Link>
+      {/* Subtle grid overlay */}
+      <div className="pointer-events-none absolute inset-0
+        bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),
+        linear-gradient(to_bottom,#1f2937_1px,transparent_1px)]
+        bg-[size:32px_32px] opacity-10" />
+
+      {/* Content */}
+      <h2 className="relative z-10 text-lg font-semibold text-white">
+        Dashboard
+      </h2>
+
+      <div className="relative z-10 flex items-center gap-4">
+
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-full
+          bg-indigo-600/80 backdrop-blur
+          flex items-center justify-center
+          text-white font-medium">
+          A
         </div>
+
+        {/* Logout */}
+        <button className="flex items-center gap-2 px-4 py-2
+          rounded-lg bg-white/5 hover:bg-white/10
+          text-sm text-gray-300 transition">
+          <LogOut size={16} />
+          Logout
+        </button>
+
       </div>
-    </motion.nav>
+    </header>
   );
 }
