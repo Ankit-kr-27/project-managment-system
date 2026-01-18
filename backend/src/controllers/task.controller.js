@@ -1,62 +1,76 @@
-import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 import { Project } from "../models/project.model.js";
 import { Task } from "../models/task.model.js";
 import { Subtask } from "../models/subtask.model.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
-import mongoose from "mongoose";
-import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
-import { pipeline } from "nodemailer/lib/xoauth2/index.js";
 
+/**
+ * GET TASKS BY PROJECT
+ * GET /api/v1/tasks/project/:projectId
+ */
 const getTasks = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+
   const project = await Project.findById(projectId);
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
   const tasks = await Task.find({
     project: new mongoose.Types.ObjectId(projectId),
-  }).populate("assignedTo", "avatar username fullName");
+  })
+    .populate("assignedTo", "username fullName avatar")
+    .sort({ createdAt: -1 });
 
   return res
-    .staus(201)
-    .json(new ApiResponse(201, tasks, "Task fetched successfully"));
+    .status(200)
+    .json(new ApiResponse(200, tasks, "Tasks fetched successfully"));
 });
+
+/**
+ * CREATE TASK
+ * POST /api/v1/tasks/project/:projectId
+ */
 const createTask = asyncHandler(async (req, res) => {
   const { title, description, assignedTo, status } = req.body;
   const { projectId } = req.params;
-  const project = await Project.findById(projectId);
 
+  const project = await Project.findById(projectId);
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
   const files = req.files || [];
 
-  const attachments = files.map((file) => {
-    return {
-      url: `${process.env.SERVER_URL}/images/${file.originalname}`,
-      mimetype: file.mimetype,
-      size: file.size,
-    };
-  });
+  const attachments = files.map((file) => ({
+    url: `${process.env.SERVER_URL}/images/${file.filename}`,
+    mimetype: file.mimetype,
+    size: file.size,
+  }));
 
   const task = await Task.create({
     title,
     description,
-    project: new mongoose.Types.ObjectId(projectId),
+    project: project._id,
     assignedTo: assignedTo
       ? new mongoose.Types.ObjectId(assignedTo)
       : undefined,
     status,
-    assignedBy: new mongoose.Types.ObjectId(req.user._id),
+    assignedBy: req.user._id,
     attachments,
   });
 
   return res
-    .staus(201)
+    .status(201)
     .json(new ApiResponse(201, task, "Task created successfully"));
 });
+
+/**
+ * GET TASK BY ID (WITH SUBTASKS)
+ * GET /api/v1/tasks/:taskId
+ */
 const getTaskById = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
 
@@ -74,10 +88,12 @@ const getTaskById = asyncHandler(async (req, res) => {
         as: "assignedTo",
         pipeline: [
           {
-            _id: 1,
-            username: 1,
-            fullName: 1,
-            avatar: 1,
+            $project: {
+              _id: 1,
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            },
           },
         ],
       },
@@ -129,33 +145,141 @@ const getTaskById = asyncHandler(async (req, res) => {
   if (!task || task.length === 0) {
     throw new ApiError(404, "Task not found");
   }
+
   return res
     .status(200)
     .json(new ApiResponse(200, task[0], "Task fetched successfully"));
 });
+
+/**
+ * UPDATE TASK
+ * PUT /api/v1/tasks/:taskId
+ */
 const updateTask = asyncHandler(async (req, res) => {
-  //chai
-});
-const deleteTask = asyncHandler(async (req, res) => {
-  //chai
-});
-const createSubTask = asyncHandler(async (req, res) => {
-  //chai
-});
-const updateSubTask = asyncHandler(async (req, res) => {
-  //chai
-});
-const deleteSubTask = asyncHandler(async (req, res) => {
-  //chai
+  const { taskId } = req.params;
+
+  const task = await Task.findByIdAndUpdate(
+    taskId,
+    { ...req.body },
+    { new: true },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, "Task updated successfully"));
 });
 
+/**
+ * DELETE TASK
+ * DELETE /api/v1/tasks/:taskId
+ */
+const deleteTask = asyncHandler(async (req, res) => {
+  const { taskId } = req.params;
+
+  const task = await Task.findByIdAndDelete(taskId);
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  await Subtask.deleteMany({ task: task._id });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Task deleted successfully"));
+});
+
+/**
+ * CREATE SUBTASK
+ */
+const createSubTask = asyncHandler(async (req, res) => {
+  const { title } = req.body;
+  const { taskId } = req.params;
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  const subtask = await Subtask.create({
+    title,
+    task: task._id,
+    createdBy: req.user._id,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, subtask, "Subtask created successfully"));
+});
+
+/**
+ * UPDATE SUBTASK
+ */
+const updateSubTask = asyncHandler(async (req, res) => {
+  const { subtaskId } = req.params;
+
+  const subtask = await Subtask.findByIdAndUpdate(
+    subtaskId,
+    { ...req.body },
+    { new: true },
+  );
+
+  if (!subtask) {
+    throw new ApiError(404, "Subtask not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, subtask, "Subtask updated successfully"));
+});
+
+/**
+ * DELETE SUBTASK
+ */
+const deleteSubTask = asyncHandler(async (req, res) => {
+  const { subtaskId } = req.params;
+
+  const subtask = await Subtask.findByIdAndDelete(subtaskId);
+  if (!subtask) {
+    throw new ApiError(404, "Subtask not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Subtask deleted successfully"));
+});
+
+const assignTask = asyncHandler(async (req, res) => {
+  const { taskId } = req.params;
+  const { assignedTo } = req.body;
+
+  const task = await Task.findByIdAndUpdate(
+    taskId,
+    { assignedTo },
+    { new: true }
+  ).populate("assignedTo", "username email");
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, "Task assigned successfully"));
+});
+
+
 export {
-  createSubTask,
-  createTask,
-  deleteTask,
-  deleteSubTask,
-  getTaskById,
   getTasks,
-  updateSubTask,
+  createTask,
+  getTaskById,
   updateTask,
+  deleteTask,
+  createSubTask,
+  updateSubTask,
+  deleteSubTask,
+  assignTask,
 };

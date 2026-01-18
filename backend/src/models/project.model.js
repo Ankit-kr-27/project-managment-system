@@ -16,6 +16,10 @@ const projectSchema = new Schema(
       ref: "User",
       required: true,
     },
+    deadline: {
+      type: Date,
+    }
+
   },
   { timestamps: true },
 );
