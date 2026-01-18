@@ -1,19 +1,35 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import Landing from "./pages/Landing";
+import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import ProjectDetails from "./pages/ProjectDetails";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Register from "./pages/Register";
 
-const App = () => {
+function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Login />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/project/:projectId"
+        element={
+          <ProtectedRoute>
+            <ProjectDetails />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
-};
+}
 
 export default App;

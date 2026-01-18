@@ -14,7 +14,7 @@ app.use(cookieParser());
 // cors configurations
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || "http://locahost:5173",
+    origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -25,14 +25,19 @@ app.use(
 import healthCheckRouter from "./routes/healthcheck.route.js";
 import authRouter from "./routes/auth.route.js";
 import projectRouter from "./routes/project.route.js";
+import taskRouter from "./routes/task.route.js";
 
 //route middlewares
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1/projects", projectRouter);
+app.use("/api/v1/tasks", taskRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to basecampy");
 });
+
+import { errorHandler } from "./middlewares/error.middleware.js";
+app.use(errorHandler);
 
 export default app;
