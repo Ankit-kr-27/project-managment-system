@@ -12,9 +12,6 @@ export const updateTaskStatus = (taskId, status) =>
   api.put(`/tasks/${taskId}`, { status });
 
 export const assignTaskMember = (taskId, assignedTo) =>
-  axios.patch(
-    `/api/v1/tasks/${taskId}/assign`,
-    { assignedTo },
-    { withCredentials: true }
-  );
+  api.patch(`/tasks/${taskId}/assign`, { assignedTo });
 
+export const getMyTasks = () => api.get("/tasks/assigned/me");
