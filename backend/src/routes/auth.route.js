@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changeCurrentPassword,
+  deleteAccount,
   forgotPasswordRequest,
   getCurrentUser,
   login,
@@ -9,6 +10,7 @@ import {
   registerUser,
   resendEmailVerification,
   resetForgotPassword,
+  updateAccountDetails,
   verifyEmail,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middlewares/validator.middleware.js";
@@ -50,4 +52,8 @@ router
   .route("/resend-email-verification")
   .post(verifyJWT, resendEmailVerification);
 
+router.route("/update-account").patch(verifyJWT, updateAccountDetails);
+router.route("/delete-account").delete(verifyJWT, deleteAccount);
+
 export default router;
+

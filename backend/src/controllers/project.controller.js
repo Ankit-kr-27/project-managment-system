@@ -82,7 +82,7 @@ const getProjectById = asyncHandler(async (req, res) => {
  * CREATE PROJECT
  */
 const createProject = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, startDate, deadline } = req.body;
 
   if (!name || !name.trim()) {
     throw new ApiError(400, "Project name is required");
@@ -99,6 +99,8 @@ const createProject = asyncHandler(async (req, res) => {
   const project = await Project.create({
     name: name.trim(),
     description,
+    startDate: startDate || Date.now(),
+    deadline,
     createdBy: req.user._id,
   });
 
@@ -118,15 +120,18 @@ const createProject = asyncHandler(async (req, res) => {
  */
 const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, description } = req.body;
+  const { name, description, startDate, deadline, status } = req.body;
 
   const project = await Project.findByIdAndUpdate(
     projectId,
     {
       name: name?.trim(),
       description,
+      startDate,
+      deadline,
+      status,
     },
-    { new: true },
+    { new: true, runValidators: true },
   );
 
   if (!project) {

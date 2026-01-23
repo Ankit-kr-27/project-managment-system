@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Project } from "../models/project.model.js";
+import { User } from "../models/user.model.js";
 import { Task } from "../models/task.model.js";
 import { Subtask } from "../models/subtask.model.js";
 import { ApiResponse } from "../utils/api-response.js";
@@ -34,7 +35,7 @@ const getTasks = asyncHandler(async (req, res) => {
  * POST /api/v1/tasks/project/:projectId
  */
 const createTask = asyncHandler(async (req, res) => {
-  const { title, description, assignedTo, status } = req.body;
+  const { title, description, assignedTo, status, deadline, assignedToEmail } = req.body;
   const { projectId } = req.params;
 
   const project = await Project.findById(projectId);
@@ -50,14 +51,25 @@ const createTask = asyncHandler(async (req, res) => {
     size: file.size,
   }));
 
+  let assignedToId = assignedTo;
+
+  if (assignedToEmail) {
+    const user = await User.findOne({ email: assignedToEmail });
+    if (!user) {
+      throw new ApiError(404, "User with this email not found");
+    }
+    assignedToId = user._id;
+  }
+
   const task = await Task.create({
     title,
     description,
     project: project._id,
-    assignedTo: assignedTo
-      ? new mongoose.Types.ObjectId(assignedTo)
+    assignedTo: assignedToId
+      ? new mongoose.Types.ObjectId(assignedToId)
       : undefined,
     status,
+    deadline,
     assignedBy: req.user._id,
     attachments,
   });
@@ -271,6 +283,23 @@ const assignTask = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, task, "Task assigned successfully"));
 });
 
+/**
+ * GET TASKS ASSIGNED TO ME
+ * GET /api/v1/tasks/my-tasks
+ */
+const getMyTasks = asyncHandler(async (req, res) => {
+  const tasks = await Task.find({
+    assignedTo: req.user._id,
+  })
+    .populate("project", "name")
+    .populate("assignedBy", "username fullName avatar")
+    .sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, tasks, "Your tasks fetched successfully"));
+});
+
 
 export {
   getTasks,
@@ -282,4 +311,5 @@ export {
   updateSubTask,
   deleteSubTask,
   assignTask,
+  getMyTasks,
 };

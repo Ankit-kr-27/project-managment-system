@@ -1,15 +1,22 @@
 import api from "./axios";
 
 export const getProjects = () => api.get("/projects");
+
+export const getProjectById = (projectId) => api.get(`/projects/${projectId}`);
+
 export const createProject = (data) => api.post("/projects", data);
-export const getProjectMembers = (projectId) =>
-  axios.get(`/api/v1/projects/${projectId}/members`, { withCredentials: true });
+
+export const updateProject = (projectId, data) => api.put(`/projects/${projectId}`, data);
+
+export const deleteProject = (projectId) => api.delete(`/projects/${projectId}`);
+
+export const getProjectMembers = (projectId) => api.get(`/projects/${projectId}/members`);
 
 export const addProjectMember = (projectId, data) =>
-  axios.post(`/api/v1/projects/${projectId}/members`, data, {
-    withCredentials: true,
-  });
+  api.post(`/projects/${projectId}/members`, data);
 
-export const getProjectById = (projectId) =>
-  axios.get(`/api/v1/projects/${projectId}`, { withCredentials: true });
+export const updateMemberRole = (projectId, userId, newRole) =>
+  api.patch(`/projects/${projectId}/members/${userId}`, { newRole });
 
+export const deleteMember = (projectId, userId) =>
+  api.delete(`/projects/${projectId}/members/${userId}`);

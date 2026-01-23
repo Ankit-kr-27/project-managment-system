@@ -9,6 +9,7 @@ import {
   updateSubTask,
   deleteSubTask,
   assignTask,
+  getMyTasks,
 } from "../controllers/task.controller.js";
 
 import { verifyJWT, validateProjectPermission } from "../middlewares/auth.middleware.js";
@@ -63,6 +64,9 @@ router
   .delete(deleteSubTask);
 
 router.patch("/:taskId/assign", assignTask);
+
+router.route("/assigned/me").get(getMyTasks);
+
 
 
 export default router;
