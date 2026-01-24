@@ -17,11 +17,13 @@ import {
     Menu,
     X
 } from "lucide-react";
+import CreateProjectModal from "./CreateProjectModal";
 
 export default function AppShell({ children }) {
     const { user, logout } = useAuth();
     const [projects, setProjects] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -42,6 +44,11 @@ export default function AppShell({ children }) {
 
     return (
         <div className="flex min-h-screen bg-[#09090b] text-white overflow-hidden">
+            <CreateProjectModal
+                isOpen={isCreateProjectOpen}
+                onClose={() => setIsCreateProjectOpen(false)}
+                onProjectCreated={loadProjects}
+            />
             {/* Sidebar */}
             <aside className={`glass border-r border-white/5 w-64 flex flex-col transition-all duration-300 z-40 fixed lg:relative h-full ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'}`}>
                 <div className="p-6 flex items-center justify-between">
@@ -90,7 +97,13 @@ export default function AppShell({ children }) {
                             onClick={() => navigate(`/project/${item.project?._id}`)}
                         />
                     ))}
-                    <SidebarLink icon={<Plus size={20} />} label="Add Project" collapsed={!isSidebarOpen} className="text-primary hover:text-primary/80" />
+                    <SidebarLink
+                        icon={<Plus size={20} />}
+                        label="Add Project"
+                        collapsed={!isSidebarOpen}
+                        className="text-primary hover:text-primary/80"
+                        onClick={() => setIsCreateProjectOpen(true)}
+                    />
                 </nav>
 
                 <div className="p-4 border-t border-white/5 space-y-1">

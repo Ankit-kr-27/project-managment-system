@@ -5,41 +5,33 @@ import {
   getTasksByProject,
   createTask,
   updateTaskStatus,
-  assignTaskMember
 } from "../api/task.api";
 import {
   getProjectMembers,
   addProjectMember,
-  getProjectById
+  getProjectById,
+  updateProject
 } from "../api/project.api";
 import {
   Plus,
   Users,
-  Filter,
-  Search,
   MoreVertical,
   Clock,
-  CheckCircle2,
-  Circle,
   UserPlus,
   Mail,
-  ChevronLeft,
   Calendar,
   Layers,
-  FileText,
   Loader2
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import AppShell from "../components/AppShell";
 import { useAuth } from "../context/AuthContext";
-import { updateProject } from "../api/project.api";
-
-
+import TaskDetailsModal from "../components/TaskDetailsModal";
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const userRole = location.state?.role;
 
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -48,17 +40,19 @@ export default function ProjectDetails() {
   const { user } = useAuth();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-
   // Form states
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [taskDeadline, setTaskDeadline] = useState("");
   const [taskMemberEmail, setTaskMemberEmail] = useState("");
+
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [memberEmail, setMemberEmail] = useState("");
   const [memberRole, setMemberRole] = useState("MEMBER");
 
+  // Task Details Modal
+  const [selectedTask, setSelectedTask] = useState(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -115,7 +109,6 @@ export default function ProjectDetails() {
     }
   };
 
-
   const handleAddMember = async (e) => {
     e.preventDefault();
     if (!memberEmail) return;
@@ -126,6 +119,11 @@ export default function ProjectDetails() {
     });
     setMemberEmail("");
     setShowMemberForm(false);
+    loadData();
+  };
+
+  const handleTaskStatusUpdate = async (taskId, status) => {
+    await updateTaskStatus(taskId, status);
     loadData();
   };
 
@@ -166,7 +164,7 @@ export default function ProjectDetails() {
             <h1 className="text-4xl font-bold tracking-tight mb-4">{project?.name}</h1>
             <p className="text-muted-foreground leading-relaxed">{project?.description || "No description provided for this project."}</p>
           </div>
-          <div className="glass p-6 rounded-[24px] space-y-4 min-w-[240px]">
+          <div className="glass p-6 rounded-[24px] space-y-6 min-w-[300px] flex flex-col">
             <div className="flex items-center justify-between text-xs tracking-widest font-bold uppercase text-muted-foreground">
               <span>Status</span>
               <div className="flex items-center gap-2">
@@ -186,6 +184,46 @@ export default function ProjectDetails() {
                 )}
               </div>
             </div>
+
+            {/* Chart Section */}
+            <div className="h-[160px] w-full relative">
+              {tasks.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'To Do', value: tasks.filter(t => t.status === 'todo').length, color: '#3f3f46' },
+                        { name: 'In Progress', value: tasks.filter(t => t.status === 'in_progress').length, color: '#eab308' },
+                        { name: 'Done', value: tasks.filter(t => t.status === 'done').length, color: '#22c55e' },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={60}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      <Cell fill="#3f3f46" /> {/* TODO */}
+                      <Cell fill="#eab308" /> {/* IN_PROGRESS */}
+                      <Cell fill="#22c55e" /> {/* DONE */}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+                      itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground font-bold uppercase tracking-widest">
+                  No Data
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-2xl font-bold">{Math.round((tasks.filter(t => t.status === 'done').length / (tasks.length || 1)) * 100)}%</span>
+              </div>
+            </div>
+
             <div className="flex items-center gap-3">
               <Calendar size={16} className="text-muted-foreground" />
               <div className="text-sm font-bold">
@@ -216,29 +254,34 @@ export default function ProjectDetails() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <TaskColumn
             title="To Do"
-            tasks={tasks.filter(t => t.status === 'TODO')}
+            tasks={tasks.filter(t => t.status === 'todo')}
             color="bg-primary/5 text-primary border-primary/20"
-            onStatusChange={(taskId, status) => handleUpdateStatus(taskId, status)}
-            loadData={loadData}
+            onStatusChange={handleTaskStatusUpdate}
+            onTaskClick={setSelectedTask}
           />
           <TaskColumn
             title="In Progress"
-            tasks={tasks.filter(t => t.status === 'IN_PROGRESS')}
+            tasks={tasks.filter(t => t.status === 'in_progress')}
             color="bg-yellow-500/5 text-yellow-500 border-yellow-500/20"
-            onStatusChange={(taskId, status) => handleUpdateStatus(taskId, status)}
-            loadData={loadData}
+            onStatusChange={handleTaskStatusUpdate}
+            onTaskClick={setSelectedTask}
           />
           <TaskColumn
             title="Done"
-            tasks={tasks.filter(t => t.status === 'DONE')}
+            tasks={tasks.filter(t => t.status === 'done')}
             color="bg-green-500/5 text-green-500 border-green-500/20"
-            onStatusChange={(taskId, status) => handleUpdateStatus(taskId, status)}
-            loadData={loadData}
+            onStatusChange={handleTaskStatusUpdate}
+            onTaskClick={setSelectedTask}
           />
         </div>
       </div>
 
-      {/* Overlays / Modals */}
+      <TaskDetailsModal
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        task={selectedTask}
+      />
+
       <AnimatePresence>
         {showTaskForm && (
           <Overlay title="New Task" onClose={() => setShowTaskForm(false)}>
@@ -330,13 +373,7 @@ export default function ProjectDetails() {
   );
 }
 
-
-function TaskColumn({ title, tasks, color, loadData }) {
-  const handleUpdateStatus = async (taskId, newStatus) => {
-    await updateTaskStatus(taskId, newStatus);
-    loadData();
-  };
-
+function TaskColumn({ title, tasks, color, onStatusChange, onTaskClick }) {
   return (
     <div className="space-y-6">
       <div className={`flex items-center justify-between px-4 py-2 rounded-xl border ${color} font-bold text-xs uppercase tracking-widest`}>
@@ -348,7 +385,8 @@ function TaskColumn({ title, tasks, color, loadData }) {
           <motion.div
             layoutId={task._id}
             key={task._id}
-            className="glass p-6 rounded-2xl border border-white/5 hover:bg-white/[0.07] transition-all group"
+            className="glass p-6 rounded-2xl border border-white/5 hover:bg-white/[0.07] transition-all group cursor-pointer relative"
+            onClick={() => onTaskClick?.(task)}
           >
             <div className="flex justify-between items-start mb-4">
               <h4 className="font-bold leading-snug group-hover:text-primary transition-colors">{task.title}</h4>
@@ -367,13 +405,14 @@ function TaskColumn({ title, tasks, color, loadData }) {
                 <span>2 days left</span>
               </div>
               <select
-                className="bg-transparent text-[10px] font-bold uppercase tracking-widest focus:outline-none cursor-pointer"
+                className="bg-transparent text-[10px] font-bold uppercase tracking-widest focus:outline-none cursor-pointer p-1"
                 value={task.status}
-                onChange={(e) => handleUpdateStatus(task._id, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onStatusChange?.(task._id, e.target.value)}
               >
-                <option value="TODO">To Do</option>
-                <option value="IN_PROGRESS">Working</option>
-                <option value="DONE">Done</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">Working</option>
+                <option value="done">Done</option>
               </select>
             </div>
           </motion.div>
