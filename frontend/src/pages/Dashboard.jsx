@@ -14,7 +14,8 @@ import {
   Layers,
   CheckCircle,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Users
 } from "lucide-react";
 import { getMyTasks } from "../api/task.api";
 
@@ -54,8 +55,22 @@ export default function Dashboard() {
         getProjects(),
         getMyTasks()
       ]);
-      setProjects(projRes.data.data || []);
-      setMyTasks(tasksRes.data.data || []);
+
+      const currentOrgId = localStorage.getItem("currentOrganizationId");
+      let allProjects = projRes.data.data || [];
+
+      if (currentOrgId) {
+        allProjects = allProjects.filter(p => p.project.organization === currentOrgId);
+      }
+
+      setProjects(allProjects);
+
+      // Filter tasks by those belonging to displayed projects
+      const projectIds = new Set(allProjects.map(p => p.project._id));
+      const allTasks = tasksRes.data.data || [];
+      const orgTasks = allTasks.filter(t => projectIds.has(t.project?._id));
+
+      setMyTasks(orgTasks);
     } catch (err) {
       console.error("Failed to load dashboard data", err);
     }
@@ -74,7 +89,8 @@ export default function Dashboard() {
         name: projectName,
         description: projectDesc,
         startDate: projectStartDate,
-        deadline: projectDeadline
+        deadline: projectDeadline,
+        organizationId: localStorage.getItem("currentOrganizationId")
       });
       setShowProjectForm(false);
       setProjectName("");
@@ -111,48 +127,90 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Project Overview Chart */}
-          <div className="lg:col-span-2 glass rounded-3xl p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold">My Recent Tasks</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-muted-foreground">Assigned to you:</span>
-                  <span className="text-xs text-primary font-bold uppercase tracking-wider">{myTasks.length} Tasks</span>
-                </div>
+          <div className="lg:col-span-2 space-y-8">
+            {/* Projects Overview */}
+            <div className="glass rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">Active Projects</h3>
+                <button
+                  onClick={() => setShowProjectForm(true)}
+                  className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 flex items-center gap-2 shadow-lg shadow-primary/20 transition-all"
+                >
+                  <Plus size={16} /> New Project
+                </button>
               </div>
-              <button
-                onClick={() => setShowProjectForm(true)}
-                className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 flex items-center gap-2 shadow-lg shadow-primary/20 transition-all"
-              >
-                <Plus size={16} /> Create Project
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {projects.length > 0 ? (
+                  projects.map((item) => (
+                    <div
+                      key={item.project._id}
+                      onClick={() => navigate(`/project/${item.project._id}`)}
+                      className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                          <Layers size={20} />
+                        </div>
+                        <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                      </div>
+                      <h4 className="font-bold mb-1 truncate">{item.project.name}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8">{item.project.description || "No description"}</p>
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users size={12} />
+                          <span>{item.project.members || 1} Members</span>
+                        </div>
+                        <span className="text-primary">{item.role}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full h-32 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-white/5 rounded-2xl">
+                    <Layers size={24} className="mb-2 opacity-50" />
+                    <span className="text-xs font-bold uppercase tracking-widest">No Active Projects</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-4 pt-4">
-              {myTasks.slice(0, 4).map((task) => (
-                <div key={task._id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer" onClick={() => navigate(`/project/${task.project?._id}`)}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.status === 'DONE' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
-                      {task.status === 'DONE' ? <CheckCircle size={20} /> : <Activity size={20} />}
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold">{task.title}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{task.project?.name}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-white/5 border border-white/5">
-                      {task.status.replace('_', ' ')}
-                    </div>
-                    <ArrowRight size={14} className="text-muted-foreground" />
+            {/* Recent Tasks */}
+            <div className="glass rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold">My Recent Tasks</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground">Assigned to you:</span>
+                    <span className="text-xs text-primary font-bold uppercase tracking-wider">{myTasks.length} Tasks</span>
                   </div>
                 </div>
-              ))}
-              {myTasks.length === 0 && (
-                <div className="h-40 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted-foreground/30 text-xs uppercase font-bold tracking-widest">
-                  No tasks assigned to you
-                </div>
-              )}
+              </div>
+
+              <div className="space-y-4 pt-4">
+                {myTasks.slice(0, 4).map((task) => (
+                  <div key={task._id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer" onClick={() => navigate(`/project/${task.project?._id}`)}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.status === 'DONE' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
+                        {task.status === 'DONE' ? <CheckCircle size={20} /> : <Activity size={20} />}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold">{task.title}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{task.project?.name}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-white/5 border border-white/5">
+                        {task.status.replace('_', ' ')}
+                      </div>
+                      <ArrowRight size={14} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                ))}
+                {myTasks.length === 0 && (
+                  <div className="h-40 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted-foreground/30 text-xs uppercase font-bold tracking-widest">
+                    No tasks assigned to you
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

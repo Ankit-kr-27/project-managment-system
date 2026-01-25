@@ -24,7 +24,7 @@ export default function Login() {
       const res = await login({ email, password });
       localStorage.setItem("accessToken", res.data.data.accessToken);
       setUser(res.data.data.user);
-      navigate("/dashboard");
+      navigate("/organizations");
     } catch (err) {
 
       alert(err.response?.data?.message || "Login failed");

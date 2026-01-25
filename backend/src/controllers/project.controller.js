@@ -51,6 +51,7 @@ const getProjects = asyncHandler(async (req, res) => {
           members: 1,
           createdAt: 1,
           createdBy: 1,
+          organization: 1,
         },
         role: 1,
       },
@@ -82,18 +83,26 @@ const getProjectById = asyncHandler(async (req, res) => {
  * CREATE PROJECT
  */
 const createProject = asyncHandler(async (req, res) => {
-  const { name, description, startDate, deadline } = req.body;
+  const { name, description, startDate, deadline, organizationId } = req.body;
 
   if (!name || !name.trim()) {
     throw new ApiError(400, "Project name is required");
   }
 
+  if (!organizationId) {
+    throw new ApiError(400, "Organization ID is required");
+  }
+
+  // Check if organization exists and user is part of it? (Optional here, but good practice)
+  // For now assuming ID is valid or checking strict referencing.
+
   const existingProject = await Project.findOne({
     name: { $regex: `^${name.trim()}$`, $options: "i" },
+    organization: organizationId
   });
 
   if (existingProject) {
-    throw new ApiError(409, "Project with this name already exists");
+    throw new ApiError(409, "Project with this name already exists in this organization");
   }
 
   const project = await Project.create({
@@ -102,6 +111,7 @@ const createProject = asyncHandler(async (req, res) => {
     startDate: startDate || Date.now(),
     deadline,
     createdBy: req.user._id,
+    organization: organizationId
   });
 
   await ProjectMember.create({

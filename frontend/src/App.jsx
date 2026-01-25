@@ -10,12 +10,34 @@ import Register from "./pages/Register";
 
 import { AuthProvider } from "./context/AuthContext";
 
+import OrganizationList from "./pages/OrganizationList";
+import CreateOrganization from "./pages/CreateOrganization";
+
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+
+        <Route
+          path="/organizations"
+          element={
+            <ProtectedRoute>
+              <OrganizationList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/create-organization"
+          element={
+            <ProtectedRoute>
+              <CreateOrganization />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard"
           element={

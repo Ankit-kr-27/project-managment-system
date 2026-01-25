@@ -30,7 +30,12 @@ export default function AppShell({ children }) {
     const loadProjects = async () => {
         try {
             const res = await getProjects();
-            setProjects(res.data.data || []);
+            const currentOrgId = localStorage.getItem("currentOrganizationId");
+            let allProjects = res.data.data || [];
+            if (currentOrgId) {
+                allProjects = allProjects.filter(p => p.project?.organization === currentOrgId);
+            }
+            setProjects(allProjects);
         } catch (err) {
             console.error("Failed to load projects", err);
         }
@@ -145,6 +150,17 @@ export default function AppShell({ children }) {
                     </div>
 
                     <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => navigate("/organizations")}>
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                                <span className="font-bold text-[10px]">ORG</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Organization</span>
+                                <span className="text-xs font-bold truncate max-w-[120px]">Switch Org</span>
+                            </div>
+                            <ChevronRight size={14} className="text-muted-foreground ml-2" />
+                        </div>
+
                         <button className="relative text-muted-foreground hover:text-foreground">
                             <Bell size={20} />
                             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-[#09090b]"></span>
