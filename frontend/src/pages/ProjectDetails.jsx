@@ -28,6 +28,9 @@ import AppShell from "../components/AppShell";
 import { useAuth } from "../context/AuthContext";
 import TaskDetailsModal from "../components/TaskDetailsModal";
 
+import CalendarView from "../components/CalendarView";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
+
 export default function ProjectDetails() {
   const { projectId } = useParams();
   const location = useLocation();
@@ -39,8 +42,9 @@ export default function ProjectDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [activeTab, setActiveTab] = useState("tasks");
 
-  // Form states
+  // ... (existing form states)
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
@@ -55,6 +59,7 @@ export default function ProjectDetails() {
   const [selectedTask, setSelectedTask] = useState(null);
 
   const loadData = async () => {
+    // ... (existing loadData)
     setIsLoading(true);
     try {
       const [pRes, tRes, mRes] = await Promise.all([
@@ -76,6 +81,7 @@ export default function ProjectDetails() {
     loadData();
   }, [projectId]);
 
+  // ... (existing handlers: handleCreateTask, handleUpdateProjectStatus, handleAddMember, handleTaskStatusUpdate)
   const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
@@ -130,6 +136,7 @@ export default function ProjectDetails() {
   if (isLoading) {
     return (
       <AppShell>
+        {/* ... existing loader */}
         <div className="h-[60vh] flex flex-col items-center justify-center gap-4 text-muted-foreground">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-xs font-bold uppercase tracking-widest">Loading Project Intelligence...</p>
@@ -141,7 +148,7 @@ export default function ProjectDetails() {
   return (
     <AppShell>
       <div className="p-8 pb-32">
-        {/* Breadcrumbs & Actions Row */}
+        {/* ... existing breadcrumbs */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Projects</span>
@@ -158,13 +165,14 @@ export default function ProjectDetails() {
           </div>
         </div>
 
-        {/* Header Info */}
+        {/* ... existing header info */}
         <div className="flex flex-col md:flex-row justify-between items-start mb-12 gap-8">
           <div className="max-w-2xl">
             <h1 className="text-4xl font-bold tracking-tight mb-4">{project?.name}</h1>
             <p className="text-muted-foreground leading-relaxed">{project?.description || "No description provided for this project."}</p>
           </div>
           <div className="glass p-6 rounded-[24px] space-y-6 min-w-[300px] flex flex-col">
+            {/* ... existing status selector */}
             <div className="flex items-center justify-between text-xs tracking-widest font-bold uppercase text-muted-foreground">
               <span>Status</span>
               <div className="flex items-center gap-2">
@@ -185,45 +193,6 @@ export default function ProjectDetails() {
               </div>
             </div>
 
-            {/* Chart Section */}
-            <div className="h-[160px] w-full relative">
-              {tasks.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'To Do', value: tasks.filter(t => t.status === 'todo').length, color: '#3f3f46' },
-                        { name: 'In Progress', value: tasks.filter(t => t.status === 'in_progress').length, color: '#eab308' },
-                        { name: 'Done', value: tasks.filter(t => t.status === 'done').length, color: '#22c55e' },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={60}
-                      paddingAngle={5}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      <Cell fill="#3f3f46" /> {/* TODO */}
-                      <Cell fill="#eab308" /> {/* IN_PROGRESS */}
-                      <Cell fill="#22c55e" /> {/* DONE */}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
-                      itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                  No Data
-                </div>
-              )}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-2xl font-bold">{Math.round((tasks.filter(t => t.status === 'done').length / (tasks.length || 1)) * 100)}%</span>
-              </div>
-            </div>
-
             <div className="flex items-center gap-3">
               <Calendar size={16} className="text-muted-foreground" />
               <div className="text-sm font-bold">
@@ -231,10 +200,7 @@ export default function ProjectDetails() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Layers size={16} className="text-muted-foreground" />
-              <div className="text-sm font-bold">{tasks.length} Total Tasks</div>
-            </div>
+            {/* ... members list */}
             <div className="flex -space-x-2 pt-2">
               {members.map((m, i) => (
                 <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-primary flex items-center justify-center text-[10px] font-bold" title={m.user.username}>
@@ -250,30 +216,63 @@ export default function ProjectDetails() {
           </div>
         </div>
 
-        {/* Task Board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <TaskColumn
-            title="To Do"
-            tasks={tasks.filter(t => t.status === 'todo')}
-            color="bg-primary/5 text-primary border-primary/20"
-            onStatusChange={handleTaskStatusUpdate}
-            onTaskClick={setSelectedTask}
-          />
-          <TaskColumn
-            title="In Progress"
-            tasks={tasks.filter(t => t.status === 'in_progress')}
-            color="bg-yellow-500/5 text-yellow-500 border-yellow-500/20"
-            onStatusChange={handleTaskStatusUpdate}
-            onTaskClick={setSelectedTask}
-          />
-          <TaskColumn
-            title="Done"
-            tasks={tasks.filter(t => t.status === 'done')}
-            color="bg-green-500/5 text-green-500 border-green-500/20"
-            onStatusChange={handleTaskStatusUpdate}
-            onTaskClick={setSelectedTask}
-          />
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-8 border-b border-white/5 mb-8">
+          <button
+            onClick={() => setActiveTab("tasks")}
+            className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === "tasks" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
+          >
+            Tasks
+          </button>
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === "calendar" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
+          >
+            Calendar
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === "analytics" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
+          >
+            Analytics
+          </button>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === "tasks" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <TaskColumn
+              title="To Do"
+              tasks={tasks.filter(t => t.status === 'todo')}
+              color="bg-primary/5 text-primary border-primary/20"
+              onStatusChange={handleTaskStatusUpdate}
+              onTaskClick={setSelectedTask}
+            />
+            <TaskColumn
+              title="working"
+              tasks={tasks.filter(t => t.status === 'in_progress')}
+              color="bg-yellow-500/5 text-yellow-500 border-yellow-500/20"
+              onStatusChange={handleTaskStatusUpdate}
+              onTaskClick={setSelectedTask}
+            />
+            <TaskColumn
+              title="Done"
+              tasks={tasks.filter(t => t.status === 'done')}
+              color="bg-green-500/5 text-green-500 border-green-500/20"
+              onStatusChange={handleTaskStatusUpdate}
+              onTaskClick={setSelectedTask}
+            />
+          </div>
+        )}
+
+        {activeTab === "calendar" && (
+          <CalendarView projectId={projectId} />
+        )}
+
+        {activeTab === "analytics" && (
+          <AnalyticsDashboard projectId={projectId} />
+        )}
+
       </div>
 
       <TaskDetailsModal

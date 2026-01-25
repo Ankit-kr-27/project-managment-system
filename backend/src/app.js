@@ -26,12 +26,18 @@ import healthCheckRouter from "./routes/healthcheck.route.js";
 import authRouter from "./routes/auth.route.js";
 import projectRouter from "./routes/project.route.js";
 import taskRouter from "./routes/task.route.js";
+import organizationRouter from "./routes/organization.route.js";
+import analyticsRouter from "./routes/analytics.route.js";
+import calendarRouter from "./routes/calendar.route.js";
 
 //route middlewares
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1/projects", projectRouter);
 app.use("/api/v1/tasks", taskRouter);
+app.use("/api/v1/organizations", organizationRouter);
+app.use("/api/v1/analytics", analyticsRouter);
+app.use("/api/v1/calendar", calendarRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to basecampy");
