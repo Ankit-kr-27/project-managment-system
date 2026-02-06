@@ -60,7 +60,7 @@ export default function CalendarView({ projectId }) {
                         return (
                             <div
                                 key={day.toString()}
-                                className={`min-h-[120px] glass rounded-xl p-3 border border-white/5 flex flex-col gap-2 ${isToday(day) ? 'ring-1 ring-primary' : ''}`}
+                                className={`min-h-[120px] glass rounded-xl p-3 border border-border flex flex-col gap-2 ${isToday(day) ? 'ring-1 ring-primary' : ''}`}
                             >
                                 <span className={`text-sm font-bold ${isToday(day) ? 'text-primary' : 'text-muted-foreground'}`}>
                                     {format(day, "d")}

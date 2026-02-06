@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { getProjects } from "../api/project.api";
 import {
     LayoutDashboard,
@@ -10,20 +11,30 @@ import {
     Calendar,
     Settings,
     Search,
-    Bell,
     ChevronRight,
     Plus,
     LogOut,
     Menu,
-    X
+    X,
+    Sun,
+    Moon,
+    Building2,
+    ChevronDown,
+    Building
 } from "lucide-react";
+import { getUserOrganizations } from "../api/organization.api";
 import CreateProjectModal from "./CreateProjectModal";
 
 export default function AppShell({ children }) {
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const [projects, setProjects] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [organizations, setOrganizations] = useState([]);
+    const [currentOrg, setCurrentOrg] = useState(null);
+    const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -41,29 +52,47 @@ export default function AppShell({ children }) {
         }
     };
 
+    const loadOrganizations = async () => {
+        try {
+            const orgsData = await getUserOrganizations();
+            const orgsList = Array.isArray(orgsData.data) ? orgsData.data : [];
+            setOrganizations(orgsList);
+
+            const currentOrgId = localStorage.getItem("currentOrganizationId");
+            if (currentOrgId) {
+                const current = orgsList.find(o => o._id === currentOrgId);
+                setCurrentOrg(current);
+            }
+        } catch (err) {
+            console.error("Failed to load organizations", err);
+        }
+    };
+
     useEffect(() => {
         loadProjects();
+        loadOrganizations();
     }, []);
 
     const isActive = (path) => location.pathname === path;
 
     return (
-        <div className="flex min-h-screen bg-[#09090b] text-white overflow-hidden">
+        <div className="flex h-screen bg-background text-foreground transition-colors duration-300 overflow-hidden">
             <CreateProjectModal
                 isOpen={isCreateProjectOpen}
                 onClose={() => setIsCreateProjectOpen(false)}
                 onProjectCreated={loadProjects}
             />
             {/* Sidebar */}
-            <aside className={`glass border-r border-white/5 w-64 flex flex-col transition-all duration-300 z-40 fixed lg:relative h-full ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'}`}>
+            <motion.aside
+                initial={false}
+                animate={{ width: isSidebarOpen ? 280 : 80 }}
+                className={`relative bg-card border-r border-border flex flex-col z-40 overflow-hidden transition-colors duration-300`}
+            >
                 <div className="p-6 flex items-center justify-between">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold shrink-0">T</div>
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold shrink-0 text-white">T</div>
                         {isSidebarOpen && <span className="text-xl font-bold tracking-tight whitespace-nowrap">Taskora</span>}
                     </div>
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden">
-                        <X size={20} />
-                    </button>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
@@ -81,27 +110,41 @@ export default function AppShell({ children }) {
                         collapsed={!isSidebarOpen}
                         onClick={() => navigate("/analytics")}
                     />
-                    <SidebarLink icon={<Users size={20} />} label="Teams" collapsed={!isSidebarOpen} />
-                    <SidebarLink icon={<Calendar size={20} />} label="Calendar" collapsed={!isSidebarOpen} />
+                    <SidebarLink
+                        icon={<Users size={20} />}
+                        label="Teams"
+                        collapsed={!isSidebarOpen}
+                        active={isActive("/teams")}
+                        onClick={() => navigate("/teams")}
+                    />
+                    <SidebarLink
+                        icon={<Calendar size={20} />}
+                        label="Calendar"
+                        collapsed={!isSidebarOpen}
+                        active={isActive("/calendar")}
+                        onClick={() => navigate("/calendar")}
+                    />
 
                     <div className="pt-8 pb-4">
                         {isSidebarOpen ? (
                             <span className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Projects</span>
                         ) : (
-                            <div className="h-px bg-white/5 mx-4" />
+                            <div className="h-px bg-border mx-4" />
                         )}
                     </div>
 
-                    {projects.map((item) => (
-                        <SidebarLink
-                            key={item.project?._id}
-                            icon={<div className="w-2 h-2 rounded-full bg-primary" />}
-                            label={item.project?.name}
-                            collapsed={!isSidebarOpen}
-                            active={location.pathname === `/project/${item.project?._id}`}
-                            onClick={() => navigate(`/project/${item.project?._id}`)}
-                        />
-                    ))}
+                    {projects
+                        .filter(item => item.project?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((item) => (
+                            <SidebarLink
+                                key={item.project?._id}
+                                icon={<div className="w-2 h-2 rounded-full bg-primary" />}
+                                label={item.project?.name}
+                                collapsed={!isSidebarOpen}
+                                active={location.pathname === `/project/${item.project?._id}`}
+                                onClick={() => navigate(`/project/${item.project?._id}`)}
+                            />
+                        ))}
                     <SidebarLink
                         icon={<Plus size={20} />}
                         label="Add Project"
@@ -111,7 +154,7 @@ export default function AppShell({ children }) {
                     />
                 </nav>
 
-                <div className="p-4 border-t border-white/5 space-y-1">
+                <div className="p-4 border-t border-border space-y-1">
                     <SidebarLink
                         icon={<Settings size={20} />}
                         label="Settings"
@@ -124,69 +167,138 @@ export default function AppShell({ children }) {
                         label="Logout"
                         collapsed={!isSidebarOpen}
                         onClick={logout}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-500 hover:text-red-400"
                     />
                 </div>
-            </aside>
+            </motion.aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
-                <header className="h-16 border-b border-white/5 px-8 flex items-center justify-between sticky top-0 bg-[#09090b]/80 backdrop-blur-md z-30">
-                    <div className="flex items-center gap-4">
+            <div className="flex-1 flex flex-col min-w-0 bg-background">
+                <header className="h-20 border-b border-border bg-card/50 backdrop-blur-xl flex items-center justify-between px-8 z-30 transition-colors duration-300">
+                    <div className="flex items-center gap-6 flex-1">
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                            className="p-2 hover:bg-accent rounded-xl transition-colors"
                         >
                             <Menu size={20} />
                         </button>
-                        <div className="relative w-64 md:w-96 hidden sm:block">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+
+                        {/* Organization Switcher */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted border border-border hover:bg-accent transition-all group"
+                            >
+                                <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                    <Building2 size={14} />
+                                </div>
+                                <div className="text-left hidden md:block overflow-hidden max-w-[120px]">
+                                    <div className="text-xs font-bold truncate tracking-tight">{currentOrg?.name || "Select Org"}</div>
+                                </div>
+                                <ChevronDown size={14} className={`text-muted-foreground group-hover:text-foreground transition-transform ${isOrgDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isOrgDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
+                                    >
+                                        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/50 mb-1">
+                                            Switch Organization
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                            {organizations.map((org) => (
+                                                <button
+                                                    key={org._id}
+                                                    onClick={() => {
+                                                        localStorage.setItem("currentOrganizationId", org._id);
+                                                        window.location.reload(); // Reload to refresh all data context
+                                                    }}
+                                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left ${currentOrg?._id === org._id ? 'bg-primary/5 text-primary' : ''}`}
+                                                >
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${currentOrg?._id === org._id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                                                        {org.name[0]}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-bold truncate">{org.name}</div>
+                                                        <div className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1">{org.members?.length || 1} Members</div>
+                                                    </div>
+                                                    {currentOrg?._id === org._id && (
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => navigate("/create-organization")}
+                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left border-t border-border mt-1"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                                                <Plus size={16} />
+                                            </div>
+                                            <div className="text-sm font-bold">New Organization</div>
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        <div className="max-w-md w-full relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-primary/50 text-sm"
+                                placeholder="Search projects..."
+                                className="w-full bg-muted border border-border rounded-xl py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-primary/50 text-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => navigate("/organizations")}>
-                            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                                <span className="font-bold text-[10px]">ORG</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Organization</span>
-                                <span className="text-xs font-bold truncate max-w-[120px]">Switch Org</span>
-                            </div>
-                            <ChevronRight size={14} className="text-muted-foreground ml-2" />
-                        </div>
-
-                        <button className="relative text-muted-foreground hover:text-foreground">
-                            <Bell size={20} />
-                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-[#09090b]"></span>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2.5 rounded-xl bg-card border border-border hover:bg-accent transition-all text-muted-foreground hover:text-foreground"
+                            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                        >
+                            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
-                        <div className="flex items-center gap-3 pl-6 border-l border-white/10">
+
+                        <div className="flex items-center gap-3 pl-4 border-l border-border ml-2">
                             <div className="text-right hidden sm:block">
                                 <div className="text-sm font-bold truncate max-w-[150px]">{user?.fullName || user?.username || "Guest"}</div>
                                 <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{user?.email || "Member"}</div>
                             </div>
                             <div
-                                className="w-10 h-10 rounded-full bg-cover bg-center border border-white/10 shadow-lg shrink-0 cursor-pointer hover:border-primary/50 transition-colors"
+                                className="w-10 h-10 rounded-full border border-border shadow-lg shrink-0 cursor-pointer hover:border-primary transition-all hover:scale-105 overflow-hidden bg-muted"
                                 onClick={() => navigate("/settings")}
-                                style={{
-                                    backgroundImage: `url(${user?.avatar?.url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Guest'}`})`,
-                                    backgroundColor: '#18181b'
-                                }}
-                            />
+                            >
+                                <img
+                                    src={user?.avatar?.url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Guest'}`}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Guest'}`;
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </header>
 
                 <main className="flex-1 overflow-y-auto custom-scrollbar">
-                    {children}
+                    {React.Children.map(children, child => {
+                        if (React.isValidElement(child)) {
+                            return React.cloneElement(child, { searchQuery });
+                        }
+                        return child;
+                    })}
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 
@@ -194,12 +306,15 @@ function SidebarLink({ icon, label, active = false, collapsed = false, className
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group ${active ? 'bg-primary/20 text-white font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'} ${className}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${active
+                ? 'bg-primary/10 text-primary font-bold shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                } ${className}`}
             title={collapsed ? label : ""}
         >
-            <div className="shrink-0">{icon}</div>
-            {!collapsed && <span className="text-sm truncate">{label}</span>}
-            {!collapsed && active && <div className="ml-auto w-1 h-4 bg-primary rounded-full" />}
+            <div className={`shrink-0 transition-transform group-hover:scale-110 ${active ? 'text-primary' : ''}`}>{icon}</div>
+            {!collapsed && <span className="text-sm truncate font-medium">{label}</span>}
+            {!collapsed && active && <motion.div layoutId="sidebar-active" className="ml-auto w-1.5 h-1.5 bg-primary rounded-full" />}
         </button>
     );
 }

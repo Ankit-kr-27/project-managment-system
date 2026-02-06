@@ -6,6 +6,7 @@ import { Subtask } from "../models/subtask.model.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
+import { sendEmail, taskAssignmentMailgenContent } from "../utils/mail.js";
 
 /**
  * GET TASKS BY PROJECT
@@ -74,6 +75,20 @@ const createTask = asyncHandler(async (req, res) => {
     assignedBy: req.user._id,
     attachments,
   });
+
+  if (assignedToId) {
+    const user = await User.findById(assignedToId);
+    await sendEmail({
+      email: user.email,
+      subject: `New Task Assigned: ${title}`,
+      mailgenContent: taskAssignmentMailgenContent(
+        user.username,
+        title,
+        project.name,
+        req.user.username
+      ),
+    });
+  }
 
   return res
     .status(201)
@@ -277,6 +292,21 @@ const assignTask = asyncHandler(async (req, res) => {
 
   if (!task) {
     throw new ApiError(404, "Task not found");
+  }
+
+  const project = await Project.findById(task.project);
+
+  if (assignedTo) {
+    await sendEmail({
+      email: task.assignedTo.email,
+      subject: `Task Reassigned: ${task.title}`,
+      mailgenContent: taskAssignmentMailgenContent(
+        task.assignedTo.username,
+        task.title,
+        project.name,
+        req.user.username
+      ),
+    });
   }
 
   return res

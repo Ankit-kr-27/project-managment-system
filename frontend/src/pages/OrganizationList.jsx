@@ -35,7 +35,7 @@ export default function OrganizationList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <button
                         onClick={() => navigate("/create-organization")}
-                        className="group flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-dashed border-white/10 hover:border-primary/50 hover:bg-white/5 transition-all text-muted-foreground hover:text-primary"
+                        className="group flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-white/5 transition-all text-muted-foreground hover:text-primary"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/5 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
                             <Plus size={32} />
@@ -47,7 +47,7 @@ export default function OrganizationList() {
                         <div
                             key={org._id}
                             onClick={() => handleSelectOrg(org._id)}
-                            className="group relative p-8 rounded-3xl bg-[#18181b] border border-white/5 hover:border-primary/50 transition-all cursor-pointer overflow-hidden"
+                            className="group relative p-8 rounded-3xl bg-[#18181b] border border-border hover:border-primary/50 transition-all cursor-pointer overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 group-hover:translate-x-0">
                                 <ArrowRight className="text-primary" />

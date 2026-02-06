@@ -1,5 +1,6 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
+import { ApiError } from "./api-error.js";
 
 const sendEmail = async (options) => {
   const mailGenerator = new Mailgen({
@@ -14,9 +15,9 @@ const sendEmail = async (options) => {
 
   const emailHtml = mailGenerator.generate(options.mailgenContent);
 
-// console.log("MAILTRAP_HOST:", process.env.MAILTRAP_SMTP_HOST);
-// console.log("MAILTRAP_PORT:", process.env.MAILTRAP_SMTP_PORT);
-// console.log("MAILTRAP_USER:", process.env.MAILTRAP_SMTP_USER);
+  // console.log("MAILTRAP_HOST:", process.env.MAILTRAP_SMTP_HOST);
+  // console.log("MAILTRAP_PORT:", process.env.MAILTRAP_SMTP_PORT);
+  // console.log("MAILTRAP_USER:", process.env.MAILTRAP_SMTP_USER);
 
   const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_SMTP_HOST,
@@ -38,10 +39,8 @@ const sendEmail = async (options) => {
   try {
     await transporter.sendMail(mail);
   } catch (error) {
-    console.error(
-      "Email service failed siliently. Make sure that you have provided your MAILTRAP credentials in the .env file",
-    );
-    console.error("Error: ", error);
+    console.error("Email service failed: ", error);
+    throw new ApiError(500, "Email service failed. Please check your SMTP configuration.");
   }
 };
 
@@ -85,8 +84,46 @@ const forgotPasswordMailgenContent = (username, passwordResetUrl) => {
   };
 };
 
+const taskAssignmentMailgenContent = (username, taskTitle, projectName, creatorName) => {
+  return {
+    body: {
+      name: username,
+      intro: `You have been assigned to a new task "${taskTitle}" in project "${projectName}" by ${creatorName}.`,
+      action: {
+        instructions: "To view the task details, click the button below:",
+        button: {
+          color: "#22BC66",
+          text: "View Task",
+          link: `${process.env.CLIENT_URL}/project/${projectName}`, // Simplified link for now
+        },
+      },
+      outro: "Good luck with the task!",
+    },
+  };
+};
+
+const projectInvitationMailgenContent = (username, projectName, inviterName) => {
+  return {
+    body: {
+      name: username,
+      intro: `You have been invited to join the project "${projectName}" by ${inviterName}.`,
+      action: {
+        instructions: "To view the project, click the button below:",
+        button: {
+          color: "#22BC66",
+          text: "Go to Project",
+          link: `${process.env.CLIENT_URL}/dashboard`,
+        },
+      },
+      outro: "We are excited to have you on the team!",
+    },
+  };
+};
+
 export {
   emailVerificationMailgenContent,
   forgotPasswordMailgenContent,
+  taskAssignmentMailgenContent,
+  projectInvitationMailgenContent,
   sendEmail,
 };

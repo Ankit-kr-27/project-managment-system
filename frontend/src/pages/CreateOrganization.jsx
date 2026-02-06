@@ -44,7 +44,7 @@ export default function CreateOrganization() {
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Organization Name</label>
                         <input
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary"
                             placeholder="e.g. Acme Corp"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -54,7 +54,7 @@ export default function CreateOrganization() {
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
                         <textarea
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary min-h-[100px]"
+                            className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary min-h-[100px]"
                             placeholder="What's this organization for?"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}

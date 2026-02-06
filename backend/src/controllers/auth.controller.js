@@ -374,6 +374,32 @@ const deleteAccount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Account deleted successfully"));
 });
 
+const updateAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  // Generate URL for the uploaded image
+  // Note: Since we are using express.static('public'), the path should be relative to public
+  const avatarUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        "avatar.url": avatarUrl,
+      },
+    },
+    { new: true },
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar updated successfully"));
+});
+
 export {
   registerUser,
   login,
@@ -386,5 +412,6 @@ export {
   resetForgotPassword,
   changeCurrentPassword,
   updateAccountDetails,
+  updateAvatar,
   deleteAccount
 };

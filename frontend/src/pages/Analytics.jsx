@@ -14,13 +14,13 @@ export default function Analytics() {
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mt-8">
-                    <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
+                    <div className="glass p-6 rounded-2xl border border-border space-y-4">
                         <BarChart2 className="w-8 h-8 text-primary" />
                         <h3 className="text-xl font-bold">Project Performance</h3>
                         <p className="text-sm text-muted-foreground">Compare velocity and completion rates across active projects.</p>
                         <div className="text-xs font-bold uppercase tracking-widest text-primary pt-2">Coming Soon</div>
                     </div>
-                    <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
+                    <div className="glass p-6 rounded-2xl border border-border space-y-4">
                         <PieChart className="w-8 h-8 text-purple-500" />
                         <h3 className="text-xl font-bold">Resource Allocation</h3>
                         <p className="text-sm text-muted-foreground">See how your team members are distributed across tasks.</p>

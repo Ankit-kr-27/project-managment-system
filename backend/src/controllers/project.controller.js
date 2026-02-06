@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
+import { sendEmail, projectInvitationMailgenContent } from "../utils/mail.js";
 
 /**
  * GET ALL PROJECTS FOR CURRENT USER
@@ -89,16 +90,10 @@ const createProject = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Project name is required");
   }
 
-  if (!organizationId) {
-    throw new ApiError(400, "Organization ID is required");
-  }
-
-  // Check if organization exists and user is part of it? (Optional here, but good practice)
-  // For now assuming ID is valid or checking strict referencing.
-
+  // organizationId is now optional
   const existingProject = await Project.findOne({
     name: { $regex: `^${name.trim()}$`, $options: "i" },
-    organization: organizationId
+    organization: organizationId || null
   });
 
   if (existingProject) {
@@ -195,6 +190,18 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     },
     { upsert: true, new: true },
   );
+
+  const project = await Project.findById(projectId);
+
+  await sendEmail({
+    email: user.email,
+    subject: `Invitation to join project: ${project.name}`,
+    mailgenContent: projectInvitationMailgenContent(
+      user.username,
+      project.name,
+      req.user.username
+    ),
+  });
 
   return res
     .status(201)

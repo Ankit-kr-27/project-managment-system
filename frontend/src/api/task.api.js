@@ -8,10 +8,10 @@ export const createTask = (projectId, formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const updateTaskStatus = (taskId, status) =>
-  api.put(`/tasks/${taskId}`, { status });
+export const updateTask = (taskId, data) =>
+  api.put(`/tasks/${taskId}`, data);
 
-export const assignTaskMember = (taskId, assignedTo) =>
-  api.patch(`/tasks/${taskId}/assign`, { assignedTo });
+export const deleteTask = (taskId) =>
+  api.delete(`/tasks/${taskId}`);
 
 export const getMyTasks = () => api.get("/tasks/assigned/me");

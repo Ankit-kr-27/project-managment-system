@@ -22,8 +22,10 @@ import {
   userResetForgotPasswordValidator,
 } from "../validators/index.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
+import { updateAvatar } from "../controllers/auth.controller.js";
 
 // unsecured route
 router.route("/register").post(userRegisterValidator(), validate, registerUser);
@@ -53,6 +55,7 @@ router
   .post(verifyJWT, resendEmailVerification);
 
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
+router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateAvatar);
 router.route("/delete-account").delete(verifyJWT, deleteAccount);
 
 export default router;
