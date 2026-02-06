@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getTasksByProject,
   createTask,
-  updateTaskStatus,
+  updateTask,
+  deleteTask,
 } from "../api/task.api";
 import {
   getProjectMembers,
@@ -53,7 +54,9 @@ export default function ProjectDetails() {
 
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [memberEmail, setMemberEmail] = useState("");
-  const [memberRole, setMemberRole] = useState("MEMBER");
+  const [memberRole, setMemberRole] = useState("member");
+  const [isInviting, setIsInviting] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   // Task Details Modal
   const [selectedTask, setSelectedTask] = useState(null);
@@ -119,18 +122,44 @@ export default function ProjectDetails() {
     e.preventDefault();
     if (!memberEmail) return;
 
-    await addProjectMember(projectId, {
-      email: memberEmail,
-      role: memberRole,
-    });
-    setMemberEmail("");
-    setShowMemberForm(false);
-    loadData();
+    setIsInviting(true);
+    setNotification(null);
+    try {
+      await addProjectMember(projectId, {
+        email: memberEmail,
+        role: memberRole,
+      });
+      setNotification({ type: 'success', message: 'Invitation sent successfully!' });
+      setMemberEmail("");
+      setTimeout(() => {
+        setShowMemberForm(false);
+        setNotification(null);
+      }, 2000);
+      loadData();
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Failed to send invitation. Make sure the user is registered.";
+      setNotification({ type: 'error', message: errorMsg });
+    } finally {
+      setIsInviting(false);
+    }
   };
 
-  const handleTaskStatusUpdate = async (taskId, status) => {
-    await updateTaskStatus(taskId, status);
-    loadData();
+  const handleTaskUpdate = async (taskId, data) => {
+    try {
+      await updateTask(taskId, data);
+      loadData();
+    } catch (err) {
+      console.error("Failed to update task", err);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+      loadData();
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    }
   };
 
   if (isLoading) {
@@ -156,7 +185,7 @@ export default function ProjectDetails() {
             <span className="font-bold">{project?.name}</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => setShowMemberForm(true)} className="px-4 py-2 border border-white/5 bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 flex items-center gap-2 transition-all">
+            <button onClick={() => setShowMemberForm(true)} className="px-4 py-2 border border-border bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 flex items-center gap-2 transition-all">
               <UserPlus size={14} /> Invite
             </button>
             <button onClick={() => setShowTaskForm(true)} className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
@@ -217,7 +246,7 @@ export default function ProjectDetails() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-8 border-b border-white/5 mb-8">
+        <div className="flex items-center gap-8 border-b border-border mb-8">
           <button
             onClick={() => setActiveTab("tasks")}
             className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === "tasks" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
@@ -245,21 +274,21 @@ export default function ProjectDetails() {
               title="To Do"
               tasks={tasks.filter(t => t.status === 'todo')}
               color="bg-primary/5 text-primary border-primary/20"
-              onStatusChange={handleTaskStatusUpdate}
+              onStatusChange={(taskId, status) => handleTaskUpdate(taskId, { status })}
               onTaskClick={setSelectedTask}
             />
             <TaskColumn
               title="working"
               tasks={tasks.filter(t => t.status === 'in_progress')}
               color="bg-yellow-500/5 text-yellow-500 border-yellow-500/20"
-              onStatusChange={handleTaskStatusUpdate}
+              onStatusChange={(taskId, status) => handleTaskUpdate(taskId, { status })}
               onTaskClick={setSelectedTask}
             />
             <TaskColumn
               title="Done"
               tasks={tasks.filter(t => t.status === 'done')}
               color="bg-green-500/5 text-green-500 border-green-500/20"
-              onStatusChange={handleTaskStatusUpdate}
+              onStatusChange={(taskId, status) => handleTaskUpdate(taskId, { status })}
               onTaskClick={setSelectedTask}
             />
           </div>
@@ -279,6 +308,9 @@ export default function ProjectDetails() {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         task={selectedTask}
+        onUpdate={handleTaskUpdate}
+        onDelete={handleDeleteTask}
+        projectMembers={members}
       />
 
       <AnimatePresence>
@@ -289,7 +321,7 @@ export default function ProjectDetails() {
                 <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">Title</label>
                 <input
                   autoFocus
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   placeholder="What needs to be done?"
@@ -298,7 +330,7 @@ export default function ProjectDetails() {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">Description</label>
                 <textarea
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[120px]"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[120px]"
                   value={taskDesc}
                   onChange={(e) => setTaskDesc(e.target.value)}
                   placeholder="Provide more details..."
@@ -309,7 +341,7 @@ export default function ProjectDetails() {
                   <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">Deadline</label>
                   <input
                     type="date"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                     value={taskDeadline}
                     onChange={(e) => setTaskDeadline(e.target.value)}
                   />
@@ -318,7 +350,7 @@ export default function ProjectDetails() {
                   <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">Assign to (Email)</label>
                   <input
                     type="email"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                     value={taskMemberEmail}
                     onChange={(e) => setTaskMemberEmail(e.target.value)}
                     placeholder="teammate@email.com"
@@ -343,7 +375,7 @@ export default function ProjectDetails() {
                   <input
                     autoFocus
                     type="email"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full bg-white/5 border border-border rounded-2xl py-4 pl-12 pr-6 focus:ring-1 focus:ring-primary focus:outline-none"
                     value={memberEmail}
                     onChange={(e) => setMemberEmail(e.target.value)}
                     placeholder="teammate@company.com"
@@ -353,16 +385,33 @@ export default function ProjectDetails() {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">Role</label>
                 <select
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 appearance-none focus:ring-1 focus:ring-primary focus:outline-none"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 appearance-none focus:ring-1 focus:ring-primary focus:outline-none"
                   value={memberRole}
                   onChange={(e) => setMemberRole(e.target.value)}
                 >
-                  <option value="MEMBER">Member</option>
-                  <option value="ADMIN">Admin</option>
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
-              <button className="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
-                <UserPlus size={20} /> Send Invitation
+              {notification && (
+                <div className={`p-4 rounded-xl text-xs font-bold uppercase tracking-widest ${notification.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                  {notification.message}
+                </div>
+              )}
+              <button
+                className="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={isInviting}
+              >
+                {isInviting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending Email...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={20} /> Send Invitation
+                  </>
+                )}
               </button>
             </form>
           </Overlay>
@@ -384,7 +433,7 @@ function TaskColumn({ title, tasks, color, onStatusChange, onTaskClick }) {
           <motion.div
             layoutId={task._id}
             key={task._id}
-            className="glass p-6 rounded-2xl border border-white/5 hover:bg-white/[0.07] transition-all group cursor-pointer relative"
+            className="glass p-6 rounded-2xl border border-border hover:bg-white/[0.07] transition-all group cursor-pointer relative"
             onClick={() => onTaskClick?.(task)}
           >
             <div className="flex justify-between items-start mb-4">
@@ -417,7 +466,7 @@ function TaskColumn({ title, tasks, color, onStatusChange, onTaskClick }) {
           </motion.div>
         ))}
         {tasks.length === 0 && (
-          <div className="h-40 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted-foreground/30 text-xs uppercase font-bold tracking-[0.2em]">
+          <div className="h-40 border-2 border-dashed border-border rounded-3xl flex items-center justify-center text-muted-foreground/30 text-xs uppercase font-bold tracking-[0.2em]">
             No tasks in {title}
           </div>
         )}

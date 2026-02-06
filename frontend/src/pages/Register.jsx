@@ -70,7 +70,7 @@ export default function Register() {
                 <input
                   type="text"
                   placeholder="Alex Rivera"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                 />
@@ -85,7 +85,7 @@ export default function Register() {
                 <input
                   type="text"
                   placeholder="alexrivera (lowercase)"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
                   required
@@ -101,7 +101,7 @@ export default function Register() {
                 <input
                   type="email"
                   placeholder="alex@company.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -119,7 +119,7 @@ export default function Register() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                  className="w-full bg-white/5 border border-border rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -145,7 +145,7 @@ export default function Register() {
             </div>
 
             <div className="flex items-start gap-3 pt-2">
-              <input type="checkbox" className="mt-1 w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/50" id="terms" required />
+              <input type="checkbox" className="mt-1 w-4 h-4 rounded border-border bg-white/5 text-primary focus:ring-primary/50" id="terms" required />
               <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
                 I agree to the <a href="#" className="underline hover:text-primary">Terms of Service</a> and <a href="#" className="underline hover:text-primary">Privacy Policy</a>.
               </label>

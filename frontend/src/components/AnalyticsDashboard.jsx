@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { getProjectAnalytics } from "../api/analytics.api";
 import { Loader2, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -61,7 +62,7 @@ export default function AnalyticsDashboard({ projectId }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="glass p-8 rounded-3xl border border-white/5">
+                <div className="glass p-8 rounded-3xl border border-border">
                     <h3 className="text-xl font-bold mb-6">Task Status</h3>
                     <div className="h-[300px]">
                         {statusData.length > 0 && statusData.some(d => d.value > 0) ? (
@@ -99,7 +100,7 @@ export default function AnalyticsDashboard({ projectId }) {
                     </div>
                 </div>
 
-                <div className="glass p-8 rounded-3xl border border-white/5">
+                <div className="glass p-8 rounded-3xl border border-border">
                     <h3 className="text-xl font-bold mb-6">Priority Breakdown</h3>
                     <div className="h-[300px]">
                         {priorityData.length > 0 && priorityData.some(d => d.value > 0) ? (
@@ -130,7 +131,7 @@ export default function AnalyticsDashboard({ projectId }) {
 
 function StatCard({ label, value, icon }) {
     return (
-        <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between">
+        <div className="glass p-6 rounded-2xl border border-border flex items-center justify-between">
             <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
                 <p className="text-3xl font-bold">{value}</p>

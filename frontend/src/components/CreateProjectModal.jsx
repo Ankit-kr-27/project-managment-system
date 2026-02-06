@@ -28,6 +28,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                 description,
                 startDate: startDate || undefined,
                 deadline: deadline || undefined,
+                organizationId: localStorage.getItem("currentOrganizationId")
             });
 
             // Reset form
@@ -59,10 +60,10 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                         initial={{ scale: 0.95, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                        className="w-full max-w-lg glass bg-[#0c0c0e] rounded-[32px] overflow-hidden shadow-2xl border border-white/5"
+                        className="w-full max-w-lg glass bg-[#0c0c0e] rounded-[32px] overflow-hidden shadow-2xl border border-border"
                     >
                         {/* Header */}
-                        <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                        <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-white/[0.02]">
                             <div>
                                 <h3 className="text-xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Create Project</h3>
                                 <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Start something new</p>
@@ -89,7 +90,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                 </label>
                                 <input
                                     autoFocus
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07]"
+                                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07]"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="e.g., Website Redesign"
@@ -101,7 +102,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                     <FileText size={14} /> Description
                                 </label>
                                 <textarea
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[100px] resize-none transition-all focus:bg-white/[0.07]"
+                                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[100px] resize-none transition-all focus:bg-white/[0.07]"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="What is this project about?"
@@ -115,7 +116,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                     </label>
                                     <input
                                         type="date"
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07] [color-scheme:dark]"
+                                        className={`w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07] ${theme === 'dark' ? '[color-scheme:dark]' : '[color-scheme:light]'}`}
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
                                     />
@@ -126,7 +127,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                     </label>
                                     <input
                                         type="date"
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07] [color-scheme:dark]"
+                                        className={`w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none transition-all focus:bg-white/[0.07] ${theme === 'dark' ? '[color-scheme:dark]' : '[color-scheme:light]'}`}
                                         value={deadline}
                                         onChange={(e) => setDeadline(e.target.value)}
                                     />

@@ -38,7 +38,7 @@ const CHART_DATA = [
   { name: 'Launch', progress: 74 },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ searchQuery = "" }) {
   const [projects, setProjects] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
@@ -106,12 +106,20 @@ export default function Dashboard() {
     }
   };
 
+  const upcomingTasks = myTasks
+    .filter(t => t.deadline && t.status !== 'DONE')
+    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+    .slice(0, 3);
+
   const stats = {
     total: myTasks.length,
     completed: myTasks.filter(t => t.status === 'DONE').length,
-    inProgress: myTasks.filter(t => t.status === 'IN_PROGRESS').length,
-    todo: myTasks.filter(t => t.status === 'TODO').length,
+    inProgress: myTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'inprogress' || t.status === 'working').length,
+    todo: myTasks.filter(t => t.status === 'TODO' || t.status === 'todo').length,
   };
+
+  const workloadPercent = stats.total > 0 ? Math.round(((stats.inProgress + stats.todo) / stats.total) * 100) : 0;
+  const velocityPercent = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
     <AppShell>
@@ -140,30 +148,34 @@ export default function Dashboard() {
                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {projects.length > 0 ? (
-                  projects.map((item) => (
-                    <div
-                      key={item.project._id}
-                      onClick={() => navigate(`/project/${item.project._id}`)}
-                      className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                          <Layers size={20} />
+                {projects
+                  .filter(item => item.project?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .length > 0 ? (
+                  projects
+                    .filter(item => item.project?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((item) => (
+                      <div
+                        key={item.project._id}
+                        onClick={() => navigate(`/project/${item.project._id}`)}
+                        className="p-4 rounded-2xl bg-white/5 border border-border hover:bg-white/10 transition-all cursor-pointer group"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <Layers size={20} />
+                          </div>
+                          <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                         </div>
-                        <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                      </div>
-                      <h4 className="font-bold mb-1 truncate">{item.project.name}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8">{item.project.description || "No description"}</p>
-                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users size={12} />
-                          <span>{item.project.members || 1} Members</span>
+                        <h4 className="font-bold mb-1 truncate">{item.project.name}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8">{item.project.description || "No description"}</p>
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users size={12} />
+                            <span>{item.project.members || 1} Members</span>
+                          </div>
+                          <span className="text-primary">{item.role}</span>
                         </div>
-                        <span className="text-primary">{item.role}</span>
                       </div>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <div className="col-span-full h-32 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-white/5 rounded-2xl">
                     <Layers size={24} className="mb-2 opacity-50" />
@@ -186,25 +198,28 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4 pt-4">
-                {myTasks.slice(0, 4).map((task) => (
-                  <div key={task._id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer" onClick={() => navigate(`/project/${task.project?._id}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.status === 'DONE' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
-                        {task.status === 'DONE' ? <CheckCircle size={20} /> : <Activity size={20} />}
+                {myTasks
+                  .filter(task => task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.project?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .slice(0, 4)
+                  .map((task) => (
+                    <div key={task._id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-border hover:bg-white/10 transition-all cursor-pointer" onClick={() => navigate(`/project/${task.project?._id}`)}>
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.status === 'DONE' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
+                          {task.status === 'DONE' ? <CheckCircle size={20} /> : <Activity size={20} />}
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold">{task.title}</div>
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{task.project?.name}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold">{task.title}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{task.project?.name}</div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-white/5 border border-border">
+                          {task.status.replace('_', ' ')}
+                        </div>
+                        <ArrowRight size={14} className="text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-white/5 border border-white/5">
-                        {task.status.replace('_', ' ')}
-                      </div>
-                      <ArrowRight size={14} className="text-muted-foreground" />
-                    </div>
-                  </div>
-                ))}
+                  ))}
                 {myTasks.length === 0 && (
                   <div className="h-40 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-muted-foreground/30 text-xs uppercase font-bold tracking-widest">
                     No tasks assigned to you
@@ -224,17 +239,34 @@ export default function Dashboard() {
                 </button>
               </div>
               <div className="space-y-6">
-                <ScheduleItem time="10:00 AM" label="Sprint Planning" color="bg-green-500" />
-                <ScheduleItem time="02:00 PM" label="Stakeholder Sync" color="bg-yellow-500" />
-                <ScheduleItem time="04:30 PM" label="Design Review" color="bg-primary" />
+                {upcomingTasks.length > 0 ? upcomingTasks.map(task => (
+                  <ScheduleItem
+                    key={task._id}
+                    time={new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    label={task.title}
+                    color={task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-yellow-500' : 'bg-primary'}
+                  />
+                )) : (
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center py-4">No upcoming deadlines</div>
+                )}
               </div>
             </div>
 
             <div className="glass rounded-3xl p-6">
               <h3 className="font-bold mb-6">Team Health</h3>
-              <div className="space-y-4">
-                <HealthBar label="Workload" status="Healthy" percent={85} color="bg-green-500" />
-                <HealthBar label="Velocity" status="Warning" percent={45} color="bg-yellow-500" />
+              <div className="space-y-6">
+                <HealthBar
+                  label="Workload"
+                  status={workloadPercent > 80 ? "Heavy" : workloadPercent > 50 ? "Moderate" : "Light"}
+                  percent={workloadPercent}
+                  color={workloadPercent > 80 ? "bg-red-500" : "bg-primary"}
+                />
+                <HealthBar
+                  label="Completion Rate"
+                  status={velocityPercent > 70 ? "Excellent" : velocityPercent > 40 ? "Steady" : "Starting"}
+                  percent={velocityPercent}
+                  color="bg-green-500"
+                />
               </div>
             </div>
           </div>
@@ -259,7 +291,7 @@ export default function Dashboard() {
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Project Name</label>
                   <input
                     required
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                     placeholder="e.g., Quantum System Migration"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
@@ -268,7 +300,7 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Description</label>
                   <textarea
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[100px]"
+                    className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none min-h-[100px]"
                     placeholder="Brief overview of objectives..."
                     value={projectDesc}
                     onChange={(e) => setProjectDesc(e.target.value)}
@@ -279,7 +311,7 @@ export default function Dashboard() {
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Start Date</label>
                     <input
                       type="date"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                      className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                       value={projectStartDate}
                       onChange={(e) => setProjectStartDate(e.target.value)}
                     />
@@ -288,7 +320,7 @@ export default function Dashboard() {
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Deadline</label>
                     <input
                       type="date"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
+                      className="w-full bg-white/5 border border-border rounded-2xl py-4 px-6 focus:ring-1 focus:ring-primary focus:outline-none"
                       value={projectDeadline}
                       onChange={(e) => setProjectDeadline(e.target.value)}
                     />
